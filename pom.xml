@@ -1,0 +1,24 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.github.streamshub</groupId>
+  <artifactId>flink-rag-parent</artifactId>
+  <packaging>pom</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>flink-rag-example</name>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <kafka.version>3.9.0</kafka.version>
+    <flink.version>1.20.0</flink.version>
+    <langchain4j.version>0.36.2</langchain4j.version>
+  </properties>
+
+  <modules>
+    <module>datagen</module>
+    <module>datastream</module>
+  </modules>
+
+</project>
