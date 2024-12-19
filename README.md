@@ -9,6 +9,8 @@ This will create the data generator JAR in `datagen/target/flink-rag-datagen-<ve
 
 ## Running the example locally
 
+### Dependent Services
+
 1. Download a [Kafka distribution](https://kafka.apache.org/downloads). This demo is build using the 3.9.0 libraries:
 1. Start Zookeeper:
    ```shell
@@ -18,14 +20,21 @@ This will create the data generator JAR in `datagen/target/flink-rag-datagen-<ve
    ```shell
    ./bin/kafka-server-start.sh config/server.properties 
    ```
-1. Create the input `documents` topic:
-   ```shell
-   ./bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic documents --partitions 3 --replication-factor 1 --config retention.ms=300000 --config segment.ms=60000
-   ```
 1. Start a local Inifinispan server, which will serve as the vector store:
     ```shell
     podman run --net=host -p 11222:11222 -e USER="admin" -e PASS="secret" quay.io/infinispan/server:latest
     ```
+1. Start a local instance of LocalAI. **Please Note** that the first time you run this will download a very large (multiple GBs) image that could take many hours to complete depending on your network speed.
+   ```shell
+   podman run -p 8080:8080 --name local-ai -ti localai/localai:latest-aio-cpu
+   ```
+   
+### Realtime document embedding updates
+
+1. Create the input `documents` topic:
+   ```shell
+   ./bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic documents --partitions 3 --replication-factor 1 --config retention.ms=300000 --config segment.ms=60000
+   ```
 1. Start the data generator. The first argument is the Kafka bootstrap address and the second is the per second message sending rate:
    ```shell
    java -jar datagen/target/flink-rag-datagen-1.0-SNAPSHOT-jar-with-dependencies.jar localhost:9092 0.2
@@ -38,8 +47,24 @@ This will create the data generator JAR in `datagen/target/flink-rag-datagen-<ve
    ```shell
    ./bin/start-cluster.sh
    ```
-1. Run the datastream Flink JAR:
+1. Run the embedding-update Flink JAR:
    ```shell
-   ./bin/flink run datastream/target/flink-rag-datastream-1.0-SNAPSHOT-jar-with-dependencies.jar
+   ./bin/flink run datastream/target/flink-rag-datastream-embedding-updater-jar-with-dependencies.jar
+   ```
+1. You can see the progress of the Flink Job in the [Flink UI](http://localhost:8081) and you should be able to see embeddings appearing in the [Infinispan UI](http://localhost:11222).
+
+### LLM User query
+
+1. Create the input `user-queries` topic:
+   ```shell
+   ./bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic user-queries --partitions 3 --replication-factor 1
+   ```
+1. Create the input `llm-responses` topic:
+   ```shell
+   ./bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic llm-responses --partitions 3 --replication-factor 1
+   ```
+1. Run the user query Flink JAR:
+   ```shell
+   ./bin/flink run datastream/target/flink-rag-datastream-user-query-jar-with-dependencies.jar
    ```
 1. You can see the progress of the Flink Job in the [Flink UI](http://localhost:8081) and you should be able to see embeddings appearing in the [Infinispan UI](http://localhost:11222).
